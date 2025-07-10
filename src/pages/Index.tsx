@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,8 +10,141 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Icon from "@/components/ui/icon";
+import AuthModal from "@/components/auth/AuthModal";
+import LevelSelectionModal from "@/components/auth/LevelSelectionModal";
+import UserProfile from "@/components/user/UserProfile";
+import CourseDashboard from "@/components/dashboard/CourseDashboard";
+import LessonInterface from "@/components/lesson/LessonInterface";
 
 const Index = () => {
+  const [user, setUser] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showLevelSelection, setShowLevelSelection] = useState(false);
+  const [currentView, setCurrentView] = useState<
+    "home" | "profile" | "dashboard" | "lesson"
+  >("home");
+  const [currentLesson, setCurrentLesson] = useState<string | null>(null);
+
+  const handleAuthSuccess = (userData: any) => {
+    setUser(userData);
+    if (!userData.level) {
+      setShowLevelSelection(true);
+    } else {
+      setCurrentView("dashboard");
+    }
+  };
+
+  const handleLevelSelect = (level: string) => {
+    setUser((prev) => ({ ...prev, level }));
+    setCurrentView("dashboard");
+  };
+
+  const handleStartLesson = (lessonId: string) => {
+    setCurrentLesson(lessonId);
+    setCurrentView("lesson");
+  };
+
+  const handleLessonComplete = (score: number) => {
+    setCurrentView("dashboard");
+    setCurrentLesson(null);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setCurrentView("home");
+  };
+
+  // Render different views based on current state
+  if (currentView === "profile" && user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                  <Icon name="GraduationCap" size={20} className="text-white" />
+                </div>
+                <h1 className="text-xl font-bold text-gray-900">EnglishFlow</h1>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentView("dashboard")}
+                >
+                  <Icon name="ArrowLeft" size={16} className="mr-2" />К курсам
+                </Button>
+                <Button variant="outline" onClick={handleLogout}>
+                  Выход
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+        <UserProfile user={user} onEditProfile={() => {}} />
+      </div>
+    );
+  }
+
+  if (currentView === "dashboard" && user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                  <Icon name="GraduationCap" size={20} className="text-white" />
+                </div>
+                <h1 className="text-xl font-bold text-gray-900">EnglishFlow</h1>
+              </div>
+              <nav className="hidden md:flex items-center gap-6">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentView("dashboard")}
+                >
+                  Курсы
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentView("profile")}
+                >
+                  Профиль
+                </Button>
+              </nav>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">
+                  Привет, {user.name}!
+                </span>
+                <Button variant="outline" onClick={handleLogout}>
+                  Выход
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+        <CourseDashboard
+          userLevel={user.level}
+          onStartLesson={handleStartLesson}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === "lesson" && currentLesson) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <LessonInterface
+          lessonId={currentLesson}
+          lessonTitle="Основы грамматики"
+          questions={[]}
+          onComplete={handleLessonComplete}
+          onExit={() => setCurrentView("dashboard")}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -52,10 +186,18 @@ const Index = () => {
             </nav>
 
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAuthModal(true)}
+              >
                 Вход
               </Button>
-              <Button size="sm" className="gradient-bg border-0">
+              <Button
+                size="sm"
+                className="gradient-bg border-0"
+                onClick={() => setShowAuthModal(true)}
+              >
                 Регистрация
               </Button>
             </div>
@@ -80,11 +222,20 @@ const Index = () => {
                 помощником и геймификацией. От уровня A1 до C2.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="gradient-bg border-0 hover-scale">
+                <Button
+                  size="lg"
+                  className="gradient-bg border-0 hover-scale"
+                  onClick={() => setShowAuthModal(true)}
+                >
                   <Icon name="Play" size={20} className="mr-2" />
                   Начать обучение
                 </Button>
-                <Button variant="outline" size="lg" className="hover-scale">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="hover-scale"
+                  onClick={() => setShowLevelSelection(true)}
+                >
                   <Icon name="BookOpen" size={20} className="mr-2" />
                   Выбрать уровень
                 </Button>
@@ -239,6 +390,7 @@ const Index = () => {
                   <Button
                     className="w-full mt-4 gradient-bg border-0"
                     variant="default"
+                    onClick={() => setShowAuthModal(true)}
                   >
                     Начать уровень
                   </Button>
@@ -323,7 +475,11 @@ const Index = () => {
             ))}
           </div>
 
-          <Button size="lg" className="gradient-bg border-0 hover-scale">
+          <Button
+            size="lg"
+            className="gradient-bg border-0 hover-scale"
+            onClick={() => setShowAuthModal(true)}
+          >
             <Icon name="Users" size={20} className="mr-2" />
             Присоединиться к сообществу
           </Button>
@@ -415,6 +571,20 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
+      {/* Level Selection Modal */}
+      <LevelSelectionModal
+        isOpen={showLevelSelection}
+        onClose={() => setShowLevelSelection(false)}
+        onLevelSelect={handleLevelSelect}
+      />
     </div>
   );
 };
